@@ -31,7 +31,7 @@ resource "aws_instance" "blog" {
 
 resource "aws_security_group" "blog" {
   # Name will show of in AWS console, if not def, name will be random generated
-  name        = blog
+  name        = "blog"
   description = "Allow HTTP(s) in allow all out"
   
   vpc_id = data.aws_vpc.default.id  # set ID is the default vpc
