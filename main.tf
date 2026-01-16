@@ -59,7 +59,7 @@ module "autoscaling" {
   max_size = 2
 
   vpc_zone_identifier = module.blog_vpc.public_subnets    # Specify subnets!
-  target_groups_arns  = module.blog_alb.target_group_arns # arns=amzon resource numbers
+  target_group_arns  = module.blog_alb.target_group_arns # arns=amzon resource numbers
   # the target group is created by the loadbalancer
   security_groups     = [ module.blog_sg.security_group_id ]
 
