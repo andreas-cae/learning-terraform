@@ -37,17 +37,34 @@ module "blog_vpc" {
   }
 }
 
-resource "aws_instance" "blog" {
-  ami                   = data.aws_ami.app_ami.id
-  instance_type         = var.instance_type
-  # vpc_security_group_ids = [aws_security_group.blog.id]
-  vpc_security_group_ids = [module.blog_sg.security_group_id]
+# resource "aws_instance" "blog" {
+#  ami                   = data.aws_ami.app_ami.id
+#   instance_type         = var.instance_type
+#   # vpc_security_group_ids = [aws_security_group.blog.id]
+#   vpc_security_group_ids = [module.blog_sg.security_group_id]
+# 
+#   subnet_id = module.blog_vpc.public_subnets[0]
+# 
+#   tags = {
+#     Name = "HelloWorld"
+#   }
+# }
 
-  subnet_id = module.blog_vpc.public_subnets[0]
+module "autoscaling" {
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "6.5.2"
 
-  tags = {
-    Name = "HelloWorld"
-  }
+  name     = "blog"
+  min_size = 1
+  max_size = 2
+
+  vpc_zone_identifier = module.blog_vpc.public_subnets    # Specify subnets!
+  target_groups_arns  = module.blog_alb.target_group_arns # arns=amzon resource numbers
+  # the target group is created by the loadbalancer
+  security_groups     = [ module.blog_sg.security_group_id ]
+
+  image_id      = data.aws_ami.app_ami.id
+  instance_type = var.instance_type
 }
 
 module "blog_alb" {
