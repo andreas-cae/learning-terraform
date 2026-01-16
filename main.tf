@@ -58,7 +58,7 @@ module "blog_alb" {
 
   vpc_id  = module.blog_vpc.vpc_id          # WAS "vpc-abcde012"
   subnets = module.blog_vpc.public_subnets  # WAS ["subnet-abcde012", "subnet-bcde012a"]
-  security_groups = module.blog_sg.security_group_id
+  security_groups = [ module.blog_sg.security_group_id ]
 
   # access_logs = {
   #   bucket = "my-alb-logs"
