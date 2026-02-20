@@ -59,7 +59,7 @@ module "autoscaling" {
   max_size = 2
 
   vpc_zone_identifier = module.blog_vpc.public_subnets    # Specify subnets!
-  target_group_arns  = module.blog_alb.target_group_arns # arns=amzon resource numbers
+  target_groups_arns  = module.blog_alb.target_group_arns # arns=amzon resource numbers
   # the target group is created by the loadbalancer
   security_groups     = [ module.blog_sg.security_group_id ]
 
@@ -87,16 +87,16 @@ module "blog_alb" {
       backend_protocol = "HTTP"
       backend_port     = 80
       target_type      = "instance"
-#      targets = {
-#        my_target = {
-#          target_id = aws_instance.blog.id
-#          port = 80
-#        }
+      targets = {
+        my_target = {
+          target_id = aws_instance.blog.id
+          port = 80
+        }
         # my_other_target = {
         #  target_id = "i-a1b2c3d4e5f6g7h8i"
         #  port = 8080
         # }
-#      }
+      }
     }
   ]
 
