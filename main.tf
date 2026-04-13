@@ -107,11 +107,6 @@ resource "aws_lb_target_group" "blog-tg" {
   vpc_id   = module.blog_vpc.vpc_id
 }
 
-resource "aws_lb_target_group_attachment" "blog-tg-attachment" {
-  target_group_arn = aws_lb_target_group.blog-tg.arn
-  target_id        = aws_instance.blog.id
-  port             = 80
-}
 
 module "blog_autoscaling" {
   source  = "terraform-aws-modules/autoscaling/aws"
