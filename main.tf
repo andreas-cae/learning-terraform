@@ -3,7 +3,7 @@ data "aws_ami" "app_ami" {
 
   filter {
     name   = "name"
-    values = ["bitnami-tomcat-*-x86_64-hvm-ebs-nami"]
+    values = [var.ami_filter.name]
   }
 
   filter {
@@ -11,49 +11,29 @@ data "aws_ami" "app_ami" {
     values = ["hvm"]
   }
 
-  owners = ["979382823631"] # Bitnami
+  owners = [var.ami_filter.owner]
 }
 
-#data "aws_vpc" "default" {
-#  default = true                # Constrain to be the default VPC
-#}
-
-module "blog_vpc" {
+  module "blog_vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
-  name = "dev"
-  cidr = "10.0.0.0/16"
+  name = var.environment.name
+  cidr = "${var.environment.network_prefix}.0.0/16"
 
   azs             = ["eu-north-1a", "eu-north-1b", "eu-north-1c"]
-  # private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
-
-  # enable_nat_gateway = true
-  # enable_vpn_gateway = true
+  private_subnets = ["${var.environment.network_prefix}.1.0/24", 
+                     "${var.environment.network_prefix}.2.0/24", 
+                     "${var.environment.network_prefix}.3.0/24"]
+  public_subnets  = ["${var.environment.network_prefix}.101.0/24", 
+                     "${var.environment.network_prefix}.102.0/24", 
+                     "${var.environment.network_prefix}.103.0/24"]
 
   tags = {
     Terraform = "true"
-    Environment = "dev"
+    Environment = environment.name
   }
 }
 
-# resource "aws_instance" "blog" {
-#   ami                   = data.aws_ami.app_ami.id
-#   instance_type         = var.instance_type
-#   # vpc_security_group_ids = [aws_security_group.blog.id]
-#   vpc_security_group_ids = [module.blog_sg.security_group_id]
-# 
-#   subnet_id = module.blog_vpc.public_subnets[0]
-# 
-#   tags = {
-#     Name = "HelloWorld"
-#   }
-# }
-# 
-# resource "aws_ec2_instance_state" "blog" {
-#   instance_id = aws_instance.blog.id
-#   state       = "running"                    # allowed states: stopped|running
-# }
 
 module "blog_sg" {
   source          = "terraform-aws-modules/security-group/aws"
@@ -81,10 +61,6 @@ module "blog_alb" {
   # Security Group
   security_groups = [module.blog_sg.security_group_id]
 
-  #access_logs = {
-  #  bucket = "my-alb-logs"
-  #}
-
   listeners = {
     blog-http = {
       port     = 80
@@ -96,7 +72,7 @@ module "blog_alb" {
   }
 
   tags = {
-    Environment = "dev"
+    Environment = var.environment.name
   }
 }
 
@@ -113,12 +89,12 @@ module "blog_autoscaling" {
   version = "9.2.0"
   # insert the required variable here
   name      = "blog"
-  min_size  = 1
-  max_size  = 2
-  # We can also add a prefered size parameter...
+  min_size  = var.min_size
+  max_size  = var.max_size
+  # We can also add a preferred size parameter...
 
   vpc_zone_identifier = module.blog_vpc.public_subnets
-	
+
   launch_template_name = "blog"  # we'll let the module take care of setting up the template
   security_groups        = [module.blog_sg.security_group_id]
   instance_type          = var.instance_type
