@@ -30,7 +30,7 @@ data "aws_ami" "app_ami" {
 
   tags = {
     Terraform = "true"
-    Environment = environment.name
+    Environment = var.environment.name
   }
 }
 
