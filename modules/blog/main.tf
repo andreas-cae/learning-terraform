@@ -14,7 +14,7 @@ data "aws_ami" "app_ami" {
   owners = [var.ami_filter.owner]
 }
 
-  module "blog_vpc" {
+module "blog_vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
   name = var.environment.name
@@ -38,7 +38,7 @@ data "aws_ami" "app_ami" {
 module "blog_sg" {
   source          = "terraform-aws-modules/security-group/aws"
   version         = "5.3.1"
-  name            = "blog"
+  name            = "${var.environment.name}-blog"
   use_name_prefix = false
   description     = "SG for webserver created using the security_group module"
 
@@ -54,7 +54,7 @@ module "blog_sg" {
 module "blog_alb" {
   source = "terraform-aws-modules/alb/aws"
 
-  name    = "blog-alb"
+  name    = "${var.environment.name}-blog-alb"
   vpc_id  = module.blog_vpc.vpc_id
   subnets = module.blog_vpc.public_subnets
 
@@ -77,7 +77,7 @@ module "blog_alb" {
 }
 
 resource "aws_lb_target_group" "blog-tg" {
-  name     = "blog-tg"
+  name     = "${var.environment.name}-blog-tg"
   port     = 80
   protocol = "HTTP"
   vpc_id   = module.blog_vpc.vpc_id
@@ -88,20 +88,20 @@ module "blog_autoscaling" {
   source  = "terraform-aws-modules/autoscaling/aws"
   version = "9.2.0"
   # insert the required variable here
-  name      = "blog"
+  name      = "${var.environment.name}-blog"
   min_size  = var.min_size
   max_size  = var.max_size
   # We can also add a preferred size parameter...
 
   vpc_zone_identifier = module.blog_vpc.public_subnets
 
-  launch_template_name = "blog"  # we'll let the module take care of setting up the template
+  launch_template_name = "${var.environment.name}-blog"  # we'll let the module take care of setting up the template
   security_groups        = [module.blog_sg.security_group_id]
   instance_type          = var.instance_type
   image_id               = data.aws_ami.app_ami.id
 
   traffic_source_attachments = {
-    blog_alb = {
+    "${var.environment.name}-blog_alb" = {
       traffic_source_identifier = aws_lb_target_group.blog-tg.arn
     }
   }
